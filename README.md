@@ -49,11 +49,11 @@ spelpagina stuurt.
 ```
 minesweeper/
 ├── README.md
-├── index.php            # de minesweeper-pagina (Ollivier)
-├── scorebord.php        # algemeen scorebord, jQuery + Ajax (Olliver)
-├── controller.php       # bedieningspagina voor de smartphone (Ollivier)
-├── account.php          # registreren / inloggen / profiel (Ryan)
-├── mijn-scores.php      # persoonlijke scores + grafiek (Ryan)
+├── index.php            # de minesweeper-pagina 
+├── scorebord.php        # algemeen scorebord, jQuery + Ajax 
+├── controller.php       # bedieningspagina voor de smartphone 
+├── account.php          # registreren / inloggen / profiel 
+├── mijn-scores.php      # persoonlijke scores + grafiek 
 ├── api/
 │   ├── score.php        # REST: score opslaan (POST) en uitlezen (GET)
 │   └── controller.php   # REST: commando's tussen gsm en spelpagina
@@ -205,7 +205,7 @@ Status: ✅ klaar · 🔧 nog te doen
 | RESTful API naar extern toestel | ✅ gsm-controller | 🔧 |
 
 ### Geavanceerd (30%)
-| Eis | Ollivier | Ollivier |
+| Eis | Ollivier | Ryan |
 |---|---|---|
 | Atomic commits & branches | 🔧  | 🔧 |
 | PHP voorbij lecture 5 | 🔧 ` | 🔧  |
@@ -229,6 +229,4 @@ Status: ✅ klaar · 🔧 nog te doen
   Met WebSockets zou dit efficiënter (en sneller) kunnen.
 
 ---
-
-<img width="690" height="786" alt="image" src="https://github.com/user-attachments/assets/1cadcbe3-748a-457e-9208-1b2d9856abc3" />
 
