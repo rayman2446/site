@@ -49,8 +49,24 @@
        border-radius:8px; padding:10px; width:100%; cursor:pointer; font-size:.85rem; margin-top:6px;}
   .logout:hover{color:var(--danger); border-color:var(--danger);}
 </style>
+  <style>
+    .nav{display:flex; gap:6px; flex-wrap:wrap; justify-content:center;
+         margin-bottom:18px; font-family:"JetBrains Mono",monospace; font-size:.8rem;}
+    .nav a{color:#8b96a8; text-decoration:none; padding:6px 11px; border-radius:7px;
+           border:1px solid transparent;}
+    .nav a:hover{color:#e8edf5; background:#252b38;}
+    .nav a.actief{color:#f5a524; border-color:#333c4d;}
+    .nav a.login{color:#3ecf8e; margin-left:auto;}
+  </style>
 </head>
 <body>
+  <nav class="nav">
+    <a href="index.php">Spelen</a>
+    <a href="scorebord.php">Scorebord</a>
+    <a href="mijn-scores.php">Mijn scores</a>
+    <a href="achievements.php">Achievements</a>
+    <a href="account.php" class="login actief">Inloggen / Account</a>
+  </nav>
   <h1>Account</h1>
 
   <div class="card" id="card">
