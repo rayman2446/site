@@ -207,9 +207,6 @@ Elke student dekt de **volledige** basislijst op zijn eigen pagina's.
 | REST + sensor | kantel-controller | `[OPEN — zie checklist]` |
 | PHP voorbij les 5 | PDF-certificaat | PDF-rapport |
 
-`[VUL IN: pas deze tabel aan jullie echte verdeling aan. Spreek af wie het
-gedeelde achievementsysteem op zijn naam neemt als extra.]`
-
 ## Eisenchecklist
 
 ### Basis (50%)
