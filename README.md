@@ -4,9 +4,9 @@
 > achievements, PDF-export, en een smartphone die via REST als afstandsbediening
 > (kantelsensor) dient.
 
-**Groep:** `[VUL IN: groepsnummer]`
-**Studenten:** `[VUL IN: naam Student A]` · `[VUL IN: naam Student B]`
-**Repository:** `[VUL IN: github-link]`
+**Groep:** `[1EAIa]`
+**Studenten:** `[Ollivier Joachims]` · `[Rayan Kandichy]`
+**Repository:** `[https://github.com/rayman2446/site ]`
 
 ---
 
@@ -197,7 +197,7 @@ en voortgangsbalken. Data uit `api/achievements.php`.
 
 Elke student dekt de **volledige** basislijst op zijn eigen pagina's.
 
-| | Student A | Student B |
+| | Ollivier Joachims | Rayan Kandichy |
 |---|---|---|
 | Pagina's | `index.php`, `scorebord.php` | `account.php`, `mijn-scores.php` |
 | PHP | scorevalidatie, ranking | authenticatie, sessies |
@@ -213,7 +213,7 @@ gedeelde achievementsysteem op zijn naam neemt als extra.]`
 ## Eisenchecklist
 
 ### Basis (50%)
-| Eis | Student A | Student B |
+| Eis | Ollivier Joachims | Rayan Kandichy |
 |---|---|---|
 | Git version control | ✅ | ✅ |
 | GitHub voor samenwerking | ✅ | ✅ |
@@ -226,7 +226,7 @@ gedeelde achievementsysteem op zijn naam neemt als extra.]`
 | RESTful API naar extern toestel | ✅ controller | 🔧 **OPEN** (QR verwijderd) |
 
 ### Geavanceerd (30%)
-| Eis | Student A | Student B |
+| Eis | Ollivier Joachims | Rayan Kandichy |
 |---|---|---|
 | Atomic commits & branches | 🔧 `[toon in git-historiek]` | 🔧 `[toon in git-historiek]` |
 | PHP voorbij lecture 5 | ✅ PDF-certificaat | ✅ PDF-rapport |
@@ -252,7 +252,3 @@ gedeelde achievementsysteem op zijn naam neemt als extra.]`
   zonder sensor — een betrouwbaar vangnet voor de demo.
 - **Pollen i.p.v. push.** Controller en scorebord pollen op intervallen;
   WebSockets zouden efficiënter zijn.
-
----
-
-`[VUL IN: voeg eventueel screenshots toe in een /docs map en link ze hier.]`
