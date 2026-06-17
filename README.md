@@ -3,9 +3,9 @@
 > Een online Minesweeper met accounts, een persoonlijk en algemeen scorebord,
 > en een smartphone die via REST als afstandsbediening/sensor dient.
 
-**Groep:** `[VUL IN: groepsnummer]`
-**Studenten:** `[VUL IN: naam Student A]` · `[VUL IN: naam Student B]`
-**Repository:** `[VUL IN: github-link]`
+**Groep:** `1EAIa`
+**Studenten:** `Ryan Kandichy` · `Ollivier Joachims`
+**Repository:** `https://github.com/rayman2446/site`
 
 ---
 
@@ -38,7 +38,7 @@ spelpagina stuurt.
 | Onderdeel        | Gebruikt |
 |------------------|----------|
 | Structuur/opmaak | HTML, CSS |
-| Client-side      | JavaScript (vanilla), jQuery, Ajax `[VUL AAN: 2e library, bv. Chart.js]` |
+| Client-side      | JavaScript (vanilla), jQuery, Ajax |
 | Server-side      | PHP (PDO) |
 | Database         | MySQL / MariaDB |
 | Samenwerking     | Git + GitHub |
@@ -49,11 +49,11 @@ spelpagina stuurt.
 ```
 minesweeper/
 ├── README.md
-├── index.php            # de minesweeper-pagina (Student A)
-├── scorebord.php        # algemeen scorebord, jQuery + Ajax (Student A)
-├── controller.php       # bedieningspagina voor de smartphone (Student A)
-├── account.php          # registreren / inloggen / profiel (Student B)  [TE BOUWEN]
-├── mijn-scores.php      # persoonlijke scores + grafiek (Student B)      [TE BOUWEN]
+├── index.php            # de minesweeper-pagina (Ollivier)
+├── scorebord.php        # algemeen scorebord, jQuery + Ajax (Olliver)
+├── controller.php       # bedieningspagina voor de smartphone (Ollivier)
+├── account.php          # registreren / inloggen / profiel (Ryan)
+├── mijn-scores.php      # persoonlijke scores + grafiek (Ryan)
 ├── api/
 │   ├── score.php        # REST: score opslaan (POST) en uitlezen (GET)
 │   └── controller.php   # REST: commando's tussen gsm en spelpagina
@@ -62,7 +62,7 @@ minesweeper/
 ├── js/
 │   └── game-controller.js   # koppelt de smartphone-controller aan de game
 └── css/
-    └── style.css        # gedeelde opmaak  [optioneel: nu nog per pagina]
+    └── style.css        # gedeelde opmaak
 ```
 
 ## Installatie
@@ -145,7 +145,7 @@ nummer, zodat hetzelfde commando niet herhaaldelijk wordt uitgevoerd.
 
 ## Documentatie per pagina
 
-### `index.php` — Minesweeper (Student A)
+### `index.php` — Minesweeper
 De game zelf in vanilla JavaScript. Belangrijkste mechanismen:
 - **flood fill** — een leeg vakje (0 buren) opent recursief al zijn buren;
 - **first-click safety** — mijnen worden pas ná de eerste klik geplaatst,
@@ -153,24 +153,24 @@ De game zelf in vanilla JavaScript. Belangrijkste mechanismen:
 - **win-detectie** — gewonnen zodra alle niet-mijn-vakjes open staan.
 Bij het einde van een spel wordt de score naar `api/score.php` gestuurd.
 
-### `scorebord.php` — Algemeen scorebord (Student A)
+### `scorebord.php` — Algemeen scorebord
 Toont per moeilijkheidsgraad de snelste spelers, opgehaald met **jQuery + Ajax**
 en automatisch ververst (live scorebord). Per speler wordt enkel zijn beste
 tijd getoond (`MIN(tijd)` + `GROUP BY`). Gebruikersnamen worden met `.text()`
 ingevuld, niet `.html()`, ter bescherming tegen XSS.
 
-### `controller.php` — Smartphone-bediening (Student A)
+### `controller.php` — Smartphone-bediening
 Bedieningspagina die je op je gsm opent. Een d-pad en actieknoppen sturen
 commando's via REST; de kantelbesturing leest `deviceorientation` en zet
 kanteling om naar richtingscommando's. `[Let op: tilt vereist HTTPS op iOS.]`
 
-### `account.php` — Account (Student B) `[TE BOUWEN]`
+### `account.php` — Account
 Registreren, inloggen en profiel beheren. Schrijft naar **users** (registratie,
 wachtwoord wijzigen) en leest eruit (login). Wachtwoorden via `password_hash()`,
 sessies via `session_start()`.
 `[Geplande REST + extern toestel: QR-login of avatarfoto-upload vanaf de gsm.]`
 
-### `mijn-scores.php` — Persoonlijke scores (Student B) `[TE BOUWEN]`
+### `mijn-scores.php` — Persoonlijke scores
 Toont de eigen scoregeschiedenis uit **scores**, gefilterd op `user_id`, met
 een grafiek van je tijden.
 `[Geplande 2e JS-library: Chart.js. Geplande PHP-extra: PDF-rapport van je statistieken.]`
@@ -179,22 +179,20 @@ een grafiek van je tijden.
 
 Elke student dekt de **volledige** basislijst op zijn eigen pagina's.
 
-| | Student A | Student B |
+| | Ollivier | Ryan |
 |---|---|---|
 | Pagina's | `index.php`, `scorebord.php` | `account.php`, `mijn-scores.php` |
 | PHP | scorevalidatie, ranking | authenticatie, sessies, profiel |
 | SQL | scores opslaan/uitlezen | users opslaan/uitlezen |
 | JS | spel-logica, scorebord | validatie, grafiek |
-| REST + sensor | gsm als kantel-controller | `[VUL IN: QR-login / foto-upload]` |
-
-`[VUL IN: pas deze tabel aan jullie echte verdeling aan.]`
+| REST + sensor | gsm als kantel-controller | QR-login |
 
 ## Eisenchecklist
 
 Status: ✅ klaar · 🔧 nog te doen
 
 ### Basis (50%)
-| Eis | Student A | Student B |
+| Eis | Ollivier | Ryan |
 |---|---|---|
 | Git version control | ✅ | ✅ |
 | GitHub voor samenwerking | ✅ | ✅ |
@@ -207,18 +205,18 @@ Status: ✅ klaar · 🔧 nog te doen
 | RESTful API naar extern toestel | ✅ gsm-controller | 🔧 |
 
 ### Geavanceerd (30%)
-| Eis | Student A | Student B |
+| Eis | Ollivier | Ollivier |
 |---|---|---|
-| Atomic commits & branches | 🔧 `[toon in git-historiek]` | 🔧 |
-| PHP voorbij lecture 5 | 🔧 `[bv. PDF-certificaat bij winst]` | 🔧 `[PDF-rapport]` |
+| Atomic commits & branches | 🔧  | 🔧 |
+| PHP voorbij lecture 5 | 🔧 ` | 🔧  |
 | jQuery + Ajax | ✅ scorebord | 🔧 |
-| ≥ 2 JS-libraries | 🔧 jQuery + `[2e nodig]` | 🔧 jQuery + Chart.js |
-| Extern toestel als sensor | ✅ kantelsensor | 🔧 `[camera/QR]` |
+| ≥ 2 JS-libraries | 🔧 jQuery + Canvas-confetti | 🔧 jQuery + Chart.js |
+| Extern toestel als sensor | ✅ kantelsensor | 🔧 camera |
 
 ### Extra (20%)
 | Idee | Status |
 |---|---|
-| `[VUL IN: bv. dagelijkse challenge, multiplayer-race, achievements]` | 🔧 |
+| 🔧 | 🔧 |
 
 ## Bekende beperkingen & mogelijke uitbreidingen
 
@@ -232,4 +230,5 @@ Status: ✅ klaar · 🔧 nog te doen
 
 ---
 
-`[VUL IN: voeg eventueel screenshots toe in een /docs map en link ze hier.]`
+<img width="690" height="786" alt="image" src="https://github.com/user-attachments/assets/1cadcbe3-748a-457e-9208-1b2d9856abc3" />
+
