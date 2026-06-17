@@ -1,11 +1,12 @@
 # Minesweeper — webproject
 
 > Een online Minesweeper met accounts, een persoonlijk en algemeen scorebord,
-> en een smartphone die via REST als afstandsbediening/sensor dient.
+> achievements, PDF-export, en een smartphone die via REST als afstandsbediening
+> (kantelsensor) dient.
 
-**Groep:** `1EAIa`
-**Studenten:** `Ryan Kandichy` · `Ollivier Joachims`
-**Repository:** `https://github.com/rayman2446/site`
+**Groep:** `[VUL IN: groepsnummer]`
+**Studenten:** `[VUL IN: naam Student A]` · `[VUL IN: naam Student B]`
+**Repository:** `[VUL IN: github-link]`
 
 ---
 
@@ -28,10 +29,12 @@
 
 Een speelbare Minesweeper in de browser. Je maakt een account aan, speelt
 spellen op drie moeilijkheidsgraden, en je tijden worden bewaard in een
-database. Een algemeen scorebord toont de snelste spelers; op je eigen
-profiel zie je je persoonlijke geschiedenis. Als extra kun je het spel
-besturen met je smartphone, die zijn kantelsensor over REST naar de
-spelpagina stuurt.
+database. Een algemeen scorebord toont de snelste spelers; op je eigen profiel
+zie je je geschiedenis met een grafiek en je behaalde achievements. Bij winst
+kun je een certificaat als PDF downloaden, en je statistieken als rapport. Je
+kunt het spel ook besturen door je smartphone te kantelen (via REST).
+
+Alle pagina's zijn met elkaar verbonden via een navigatiebalk bovenaan.
 
 ## Technologie
 
@@ -39,7 +42,8 @@ spelpagina stuurt.
 |------------------|----------|
 | Structuur/opmaak | HTML, CSS |
 | Client-side      | JavaScript (vanilla), jQuery, Ajax |
-| Server-side      | PHP (PDO) |
+| JS-libraries     | Student A: jQuery + canvas-confetti · Student B: jQuery + Chart.js |
+| Server-side      | PHP (PDO), FPDF voor PDF-generatie |
 | Database         | MySQL / MariaDB |
 | Samenwerking     | Git + GitHub |
 | Extern toestel   | Smartphone via REST (kantelsensor) |
@@ -49,35 +53,43 @@ spelpagina stuurt.
 ```
 minesweeper/
 ├── README.md
-├── index.php            # de minesweeper-pagina 
-├── scorebord.php        # algemeen scorebord, jQuery + Ajax 
-├── controller.php       # bedieningspagina voor de smartphone 
-├── account.php          # registreren / inloggen / profiel 
-├── mijn-scores.php      # persoonlijke scores + grafiek 
+├── index.php            # de minesweeper-pagina (Student A)
+├── scorebord.php        # algemeen scorebord, jQuery + Ajax (Student A)
+├── controller.php       # bedieningspagina voor de smartphone (Student A)
+├── account.php          # registreren / inloggen / profiel (Student B)
+├── mijn-scores.php      # persoonlijke scores + Chart.js-grafiek (Student B)
+├── achievements.php     # badge-overzicht (extra)
 ├── api/
 │   ├── score.php        # REST: score opslaan (POST) en uitlezen (GET)
-│   └── controller.php   # REST: commando's tussen gsm en spelpagina
+│   ├── controller.php   # REST: commando's tussen gsm en spelpagina
+│   ├── auth.php         # REST: registreren, inloggen, uitloggen
+│   ├── certificaat.php  # PDF-certificaat bij winst (FPDF)
+│   ├── rapport.php      # PDF-statistiekenrapport (FPDF)
+│   └── achievements.php # REST: achievementlijst met status
 ├── includes/
-│   └── db.php           # herbruikbare databaseverbinding (PDO)
+│   ├── db.php           # herbruikbare databaseverbinding (PDO)
+│   └── achievements.php # achievement-definities + evaluatie
 ├── js/
 │   └── game-controller.js   # koppelt de smartphone-controller aan de game
-└── css/
-    └── style.css        # gedeelde opmaak
+└── lib/
+    └── fpdf/fpdf.php    # FPDF-library (download van fpdf.org)
 ```
 
 ## Installatie
 
 1. Installeer **XAMPP** (of een andere LAMP-stack) en start Apache + MySQL.
 2. Plaats de projectmap in `htdocs/` (XAMPP) of `www/`.
-3. Maak in **phpMyAdmin** een database met de naam `minesweeper`.
-4. Voer het SQL-script uit de sectie [Database](#database) uit.
-5. Pas in `includes/db.php` desnoods de gebruikersnaam/wachtwoord aan
-   (bij XAMPP standaard `root` zonder wachtwoord).
+3. Maak in **phpMyAdmin** een database `minesweeper` en voer alle `CREATE TABLE`'s
+   uit de sectie [Database](#database) uit (4 tabellen).
+4. Download **FPDF** van fpdf.org en plaats `fpdf.php` in `lib/fpdf/`.
+5. Pas in `includes/db.php` de gebruikersnaam/wachtwoord aan (bij XAMPP standaard
+   `root` zonder wachtwoord).
 6. Open het project in je browser:
    - lokaal testen: `http://localhost/minesweeper/index.php`
-   - **voor de smartphone-controller:** open via het lokale IP van je laptop,
-     bv. `http://192.168.0.42/minesweeper/index.php`, zodat je gsm de pagina
-     kan bereiken. Beide toestellen moeten op hetzelfde wifi-netwerk zitten.
+     (de login staat op `account.php`, bereikbaar via de navigatiebalk)
+   - **voor de kantel-controller:** open via het lokale IP van je laptop,
+     bv. `http://192.168.0.42/minesweeper/index.php`, zodat je gsm de pagina kan
+     bereiken. Beide toestellen op hetzelfde wifi-netwerk.
 
 ## Database
 
@@ -105,128 +117,142 @@ CREATE TABLE controller_state (
   seq      INT NOT NULL DEFAULT 0,              -- volgnummer per nieuw commando
   updated  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+CREATE TABLE user_achievements (
+  user_id        INT NOT NULL,
+  achievement_id VARCHAR(40) NOT NULL,
+  behaald_op     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, achievement_id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
 ```
 
-- **users** — accountgegevens. Het wachtwoord wordt nooit als platte tekst
-  bewaard, enkel als hash (`password_hash()` in PHP).
-- **scores** — één rij per gespeeld spel. Het algemene scorebord leest hieruit;
-  de persoonlijke pagina filtert op `user_id`.
-- **controller_state** — de gedeelde "brievenbus" tussen smartphone en laptop
-  (zie [Architectuur](#architectuur)).
+- **users** — accountgegevens; het wachtwoord wordt enkel als bcrypt-hash bewaard.
+- **scores** — één rij per gespeeld spel; voedt het scorebord, de grafiek,
+  de achievements en de PDF's.
+- **controller_state** — de gedeelde "brievenbus" voor de kantel-controller.
+- **user_achievements** — welke achievements een speler al behaald heeft.
 
 ## Architectuur
 
 ### Score opslaan en uitlezen
-De game (JavaScript) stuurt na elk spel een score via `fetch` naar
-`api/score.php` (REST `POST`). Het scorebord vraagt scores op via
-`api/score.php` (REST `GET`) met jQuery + Ajax, en ververst automatisch.
-Alle databasetoegang gebeurt met **prepared statements** (PDO), wat
-SQL-injectie tegengaat.
+De game stuurt na elk spel een score via `fetch` naar `api/score.php`
+(REST POST). Het scorebord en de persoonlijke pagina lezen scores uit via
+`api/score.php` (REST GET, met jQuery + Ajax). Alle databasetoegang gebeurt met
+**prepared statements** (PDO) tegen SQL-injectie. Het `user_id` komt steeds uit
+de PHP-sessie, nooit uit de client.
 
-### Smartphone-controller (REST + sensor)
-Gsm en laptop zijn aparte toestellen en delen dus geen PHP-sessie. Ze vinden
-elkaar via een **koppelcode** die de spelpagina toont:
+### Authenticatie
+`api/auth.php` regelt registreren, inloggen en uitloggen. Wachtwoorden via
+`password_hash()` / `password_verify()`. Na login wordt `$_SESSION['user_id']`
+gezet — exact wat de andere endpoints uitlezen.
 
-```
-   SMARTPHONE                  SERVER (PHP + MySQL)              LAPTOP
-  controller.php               api/controller.php             index.php
- ─────────────────            ───────────────────           ──────────────
- leest kantelsensor   POST →   schrijft commando
- (deviceorientation)           in controller_state
-                                       │
-                                       ▼
-                               leest laatste     ← GET   pollt elke 200 ms,
-                               commando uit               beweegt de cursor
-```
+### Smartphone-controller (REST + kantelsensor)
+Gsm en laptop delen geen sessie, dus ze vinden elkaar via een **koppelcode** die
+de spelpagina toont. De gsm leest `deviceorientation` en stuurt richtingen via
+REST POST; de spelpagina haalt ze op via REST GET en beweegt een cursor. Het
+veld `seq` zorgt dat eenzelfde commando niet twee keer wordt uitgevoerd.
 
-Het veld `seq` (volgnummer) stijgt bij elk nieuw commando. De spelpagina
-onthoudt het laatst verwerkte volgnummer en handelt enkel bij een hoger
-nummer, zodat hetzelfde commando niet herhaaldelijk wordt uitgevoerd.
+### Achievements
+De achievements worden **server-side afgeleid** uit de scores-tabel (de client
+kan niets claimen). `includes/achievements.php` bevat de definities en een
+evaluatiefunctie die je statistieken berekent, de condities controleert en
+nieuw behaalde achievements opslaat in `user_achievements`.
+
+### PDF-generatie
+`api/certificaat.php` (Student A) en `api/rapport.php` (Student B) bouwen
+server-side een PDF met **FPDF**. Het rapport wordt gevoed door één
+SQL-aggregatie (`COUNT`, `SUM`, `MIN(CASE ...)`, `GROUP BY`).
 
 ## Documentatie per pagina
 
-### `index.php` — Minesweeper
-De game zelf in vanilla JavaScript. Belangrijkste mechanismen:
-- **flood fill** — een leeg vakje (0 buren) opent recursief al zijn buren;
-- **first-click safety** — mijnen worden pas ná de eerste klik geplaatst,
-  weg van het aangeklikte vakje;
-- **win-detectie** — gewonnen zodra alle niet-mijn-vakjes open staan.
-Bij het einde van een spel wordt de score naar `api/score.php` gestuurd.
+### `index.php` — Minesweeper (Student A)
+De game in vanilla JavaScript. Kernmechanismen: **flood fill**, **first-click
+safety** en **win-detectie**. Bij winst speelt een **canvas-confetti**-viering die
+meeschaalt met de moeilijkheidsgraad, wordt de score verstuurd, en verschijnt
+een link naar het PDF-certificaat.
 
-### `scorebord.php` — Algemeen scorebord
-Toont per moeilijkheidsgraad de snelste spelers, opgehaald met **jQuery + Ajax**
-en automatisch ververst (live scorebord). Per speler wordt enkel zijn beste
-tijd getoond (`MIN(tijd)` + `GROUP BY`). Gebruikersnamen worden met `.text()`
-ingevuld, niet `.html()`, ter bescherming tegen XSS.
+### `scorebord.php` — Algemeen scorebord (Student A)
+Toont per niveau de snelste spelers (jQuery + Ajax, auto-refresh). Per speler
+enkel de beste tijd (`MIN(tijd)` + `GROUP BY`). Namen via `.text()` tegen XSS.
 
-### `controller.php` — Smartphone-bediening
-Bedieningspagina die je op je gsm opent. Een d-pad en actieknoppen sturen
-commando's via REST; de kantelbesturing leest `deviceorientation` en zet
-kanteling om naar richtingscommando's. `[Let op: tilt vereist HTTPS op iOS.]`
+### `controller.php` — Smartphone-bediening (Student A)
+D-pad + actieknoppen die commando's via REST sturen; kantelbesturing leest
+`deviceorientation`. (Tilt vereist HTTPS op iOS; de knoppen werken altijd.)
 
-### `account.php` — Account
-Registreren, inloggen en profiel beheren. Schrijft naar **users** (registratie,
-wachtwoord wijzigen) en leest eruit (login). Wachtwoorden via `password_hash()`,
-sessies via `session_start()`.
-`[Geplande REST + extern toestel: QR-login of avatarfoto-upload vanaf de gsm.]`
+### `account.php` — Account (Student B)
+Registreren, inloggen, profiel. Client-side validatie + Ajax naar `api/auth.php`.
+Wachtwoorden gehasht; login geeft één algemene fout (geen user enumeration);
+`session_regenerate_id()` na login.
 
-### `mijn-scores.php` — Persoonlijke scores
-Toont de eigen scoregeschiedenis uit **scores**, gefilterd op `user_id`, met
-een grafiek van je tijden.
-`[Geplande 2e JS-library: Chart.js. Geplande PHP-extra: PDF-rapport van je statistieken.]`
+### `mijn-scores.php` — Persoonlijke scores (Student B)
+Statistieken en een **Chart.js**-grafiek van je wintijden, opgehaald via
+`api/score.php?scope=mij`. Knop voor het PDF-rapport.
+
+### `achievements.php` — Achievements (extra)
+Badge-raster met ontgrendelde (in kleur) en vergrendelde (gedimd) achievements,
+en voortgangsbalken. Data uit `api/achievements.php`.
 
 ## Taakverdeling
 
 Elke student dekt de **volledige** basislijst op zijn eigen pagina's.
 
-| | Ollivier | Ryan |
+| | Student A | Student B |
 |---|---|---|
 | Pagina's | `index.php`, `scorebord.php` | `account.php`, `mijn-scores.php` |
-| PHP | scorevalidatie, ranking | authenticatie, sessies, profiel |
-| SQL | scores opslaan/uitlezen | users opslaan/uitlezen |
+| PHP | scorevalidatie, ranking | authenticatie, sessies |
+| SQL | scores opslaan/uitlezen | users + scores |
 | JS | spel-logica, scorebord | validatie, grafiek |
-| REST + sensor | gsm als kantel-controller | QR-login |
+| 2 JS-libraries | jQuery + canvas-confetti | jQuery + Chart.js |
+| REST + sensor | kantel-controller | `[OPEN — zie checklist]` |
+| PHP voorbij les 5 | PDF-certificaat | PDF-rapport |
+
+`[VUL IN: pas deze tabel aan jullie echte verdeling aan. Spreek af wie het
+gedeelde achievementsysteem op zijn naam neemt als extra.]`
 
 ## Eisenchecklist
 
-Status: ✅ klaar · 🔧 nog te doen
-
 ### Basis (50%)
-| Eis | Ollivier | Ryan |
+| Eis | Student A | Student B |
 |---|---|---|
 | Git version control | ✅ | ✅ |
 | GitHub voor samenwerking | ✅ | ✅ |
-| README met documentatie | ✅ (dit bestand) | ✅ |
-| ≥ 2 niet-triviale pagina's | ✅ game + scorebord | 🔧 account + mijn-scores |
-| Server-side in PHP | ✅ `api/score.php` | 🔧 |
-| Client-side in JS | ✅ spel-logica | 🔧 |
-| HTML/CSS structuur | ✅ | 🔧 |
-| SQL: opslaan én uitlezen | ✅ scores | 🔧 users |
-| RESTful API naar extern toestel | ✅ gsm-controller | 🔧 |
+| README met documentatie | ✅ | ✅ |
+| ≥ 2 niet-triviale pagina's | ✅ | ✅ |
+| Server-side in PHP | ✅ | ✅ |
+| Client-side in JS | ✅ | ✅ |
+| HTML/CSS structuur | ✅ | ✅ |
+| SQL: opslaan én uitlezen | ✅ | ✅ |
+| RESTful API naar extern toestel | ✅ controller | 🔧 **OPEN** (QR verwijderd) |
 
 ### Geavanceerd (30%)
-| Eis | Ollivier | Ryan |
+| Eis | Student A | Student B |
 |---|---|---|
-| Atomic commits & branches | 🔧  | 🔧 |
-| PHP voorbij lecture 5 | 🔧 ` | 🔧  |
-| jQuery + Ajax | ✅ scorebord | 🔧 |
-| ≥ 2 JS-libraries | 🔧 jQuery + Canvas-confetti | 🔧 jQuery + Chart.js |
-| Extern toestel als sensor | ✅ kantelsensor | 🔧 camera |
+| Atomic commits & branches | 🔧 `[toon in git-historiek]` | 🔧 `[toon in git-historiek]` |
+| PHP voorbij lecture 5 | ✅ PDF-certificaat | ✅ PDF-rapport |
+| jQuery + Ajax | ✅ scorebord | ✅ mijn-scores |
+| ≥ 2 JS-libraries | ✅ jQuery + canvas-confetti | ✅ jQuery + Chart.js |
+| Extern toestel als sensor | ✅ kantelsensor | 🔧 **OPEN** (QR verwijderd) |
+
+> **Let op:** door het verwijderen van de QR-login mist Student B nu zowel de
+> basisvereiste "RESTful API naar een extern toestel" (50%) als de geavanceerde
+> "extern toestel werkt als sensor" (30%). Student B heeft hiervoor nog een
+> (eenvoudigere) feature met een extern toestel nodig.
 
 ### Extra (20%)
-| Idee | Status |
+| Functionaliteit | Status |
 |---|---|
-| 🔧 | 🔧 |
+| Achievementsysteem (server-side afgeleid uit scores) | ✅ |
 
 ## Bekende beperkingen & mogelijke uitbreidingen
 
 - **Controller, laatste commando wint.** `controller_state` bewaart enkel het
-  meest recente commando. Stuurt de gsm twee commando's tussen twee polls in,
-  dan gaat het eerste verloren. Een commando-wachtrij zou dit oplossen.
-- **Kantelsensor op iOS vereist HTTPS** en een toestemmingsvraag. De d-pad-knoppen
-  werken altijd, ook zonder sensor — een betrouwbaar vangnet voor de demo.
-- **Pollen i.p.v. push.** De spelpagina vraagt elke 200 ms naar nieuwe commando's.
-  Met WebSockets zou dit efficiënter (en sneller) kunnen.
+  meest recente commando; een commando-wachtrij zou dit oplossen.
+- **Kantelsensor op iOS vereist HTTPS.** De d-pad-knoppen werken altijd, ook
+  zonder sensor — een betrouwbaar vangnet voor de demo.
+- **Pollen i.p.v. push.** Controller en scorebord pollen op intervallen;
+  WebSockets zouden efficiënter zijn.
 
 ---
 
+`[VUL IN: voeg eventueel screenshots toe in een /docs map en link ze hier.]`
