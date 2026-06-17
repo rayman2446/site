@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minesweeper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* ---------- design tokens ---------- */
+  :root{
+    --shell:#1b1f2a;        /* donkere achtergrond rond het bord  */
+    --panel:#252b38;        /* paneel / kaders                    */
+    --hud-bg:#10131a;        /* zwart "LED"-display                */
+    --tile:#c9d2e0;          /* bedekt vakje                       */
+    --tile-hi:#dde4ee;       /* bedekt vakje, hover                */
+    --tile-open:#eef1f6;     /* geopend vakje                      */
+    --line:#aab4c4;          /* rasterlijn                         */
+    --text:#e8edf5;
+    --muted:#8b96a8;
+    --danger:#e5484d;        /* mijnen                             */
+    --flag:#f5a524;          /* vlag (amber)                       */
+    /* klassieke kleurcode per aantal aangrenzende mijnen          */
+    --n1:#1565c0; --n2:#2e7d32; --n3:#c62828; --n4:#6a1b9a;
+    --n5:#ad1457; --n6:#00838f; --n7:#37474f; --n8:#757575;
+    --cell:32px;             /* celgrootte, wordt kleiner op gsm   */
+  }
+
+  .navbar{
+    background-color: rgb(64, 64, 64);
+    width: 100%;
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    box-sizing: border-box;
+    border-bottom: 3px solid rgb(90, 90, 90);
+  }
+
+  .navbar button{
+    background-color: rgb(80, 80, 80);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+
+  .navbar button:hover{background-color: rgb(100, 100, 100);}
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:var(--shell);
+    color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    padding:24px 12px 48px;
+  }
+
+  h1{
+    font-family:"JetBrains Mono",monospace;
+    font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+    font-size:1.25rem; margin:0 0 4px;
+  }
+  .subtitle{color:var(--muted); font-size:.85rem; margin-bottom:20px;}
+
+  /* ---------- moeilijkheidskeuze ---------- */
+  .levels{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; justify-content:center;}
+  .levels button{
+    background:var(--panel); color:var(--text);
+    border:1px solid #333c4d; border-radius:8px;
+    padding:8px 14px; font-size:.85rem; cursor:pointer;
+    font-family:"JetBrains Mono",monospace;
+    transition:background .15s,border-color .15s;
+  }
+  .levels button:hover{background:#2f3749;}
+  .levels button.active{border-color:var(--flag); color:var(--flag);}
+
+  /* ---------- HUD: mijnteller / smiley / timer ---------- */
+  .hud{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--panel); border:1px solid #333c4d; border-radius:10px;
+    padding:10px 14px; margin-bottom:12px; width:100%; max-width:420px;
+  }
+  .display{
+    background:var(--hud-bg); color:var(--danger);
+    font-family:"JetBrains Mono",monospace; font-weight:700;
+    font-size:1.4rem; letter-spacing:.08em;
+    padding:4px 10px; border-radius:6px; min-width:74px; text-align:center;
+  }
+  .reset{
+    font-size:1.6rem; background:var(--tile); border:none;
+    width:46px; height:46px; border-radius:8px; cursor:pointer;
+    line-height:1; transition:transform .1s;
+  }
+  .reset:active{transform:scale(.92);}
+
+  .flag-toggle{
+    margin-bottom:14px; background:var(--panel); color:var(--text);
+    border:1px solid #333c4d; border-radius:8px; padding:8px 14px;
+    cursor:pointer; font-size:.85rem; font-family:"JetBrains Mono",monospace;
+  }
+  .flag-toggle.on{border-color:var(--flag); color:var(--flag);}
+
+  /* ---------- het bord ---------- */
+  .board-wrap{max-width:100%; overflow:auto; padding:4px; border-radius:10px;}
+  .board{
+    display:grid; gap:2px; background:var(--line);
+    border:3px solid var(--line); border-radius:6px;
+    width:max-content; user-select:none;
+  }
+  .cell{
+    width:var(--cell); height:var(--cell);
+    border:none; padding:0; margin:0; cursor:pointer;
+    background:var(--tile);
+    font-family:"JetBrains Mono",monospace; font-weight:700;
+    font-size:calc(var(--cell) * .55);
+    display:flex; align-items:center; justify-content:center;
+    border-radius:3px;
+  }
+  .cell:hover:not(.open){background:var(--tile-hi);}
+  .cell:focus-visible{outline:2px solid var(--flag); outline-offset:-2px;}
+  .cell.open{background:var(--tile-open); cursor:default;}
+  .cell.mine{background:var(--danger);}
+  .cell.flagged{color:var(--flag);}
+  /* kleurcode per cijfer */
+  .cell.n1{color:var(--n1);} .cell.n2{color:var(--n2);}
+  .cell.n3{color:var(--n3);} .cell.n4{color:var(--n4);}
+  .cell.n5{color:var(--n5);} .cell.n6{color:var(--n6);}
+  .cell.n7{color:var(--n7);} .cell.n8{color:var(--n8);}
+
+  .status{margin-top:16px; min-height:1.4em; font-family:"JetBrains Mono",monospace; font-size:.95rem;}
+  .status.win{color:#3ecf8e;} .status.lose{color:var(--danger);}
+
+  @media(max-width:560px){ :root{ --cell:26px; } }
+  @media(prefers-reduced-motion:reduce){ *{transition:none!important;} }
+</style>
+</head>
+<body>
+  <h1>Minesweeper</h1>
+  <p class="subtitle">Klik om te openen &bull; rechtsklik (of vlag-modus) om te markeren</p>
+
+  <div class="navbar">
+    <a href="minesweeper.html"><button>Minesweeper</button></a>
+    <a href="mijn-scores.html"><button>Mijn scores</button></a>
+    <a href="scorebord.html"><button>Scorebord</button></a>
+    <a href="sensortest.html"><button>Sensortest</button></a>
+  </div>
+
+  <div class="levels" id="levels">
+    <button data-level="beginner" class="active">Beginner 9&times;9</button>
+    <button data-level="intermediate">Gevorderd 16&times;16</button>
+    <button data-level="expert">Expert 16&times;30</button>
+  </div>
+
+  <div class="hud">
+    <div class="display" id="mineCount">010</div>
+    <button class="reset" id="reset" aria-label="Nieuw spel">🙂</button>
+    <div class="display" id="timer">000</div>
+  </div>
+
+  <button class="flag-toggle" id="flagToggle" aria-pressed="false">🚩 Vlag-modus: uit</button>
+
+  <div class="board-wrap">
+    <div class="board" id="board" role="grid" aria-label="Mijnenveld"></div>
+  </div>
+
+  <p class="status" id="status" role="status"></p>
+
+<!-- 2e JS-library: canvas-confetti (viering bij winst) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
+<script>
+/* =====================================================================
+   MINESWEEPER — vanilla JavaScript
+   Kernonderdelen die je kunt verdedigen:
+   - bord opbouwen als 2D-datastructuur (array van cel-objecten)
+   - "first-click safety": mijnen pas plaatsen NA de eerste klik
+   - flood fill: lege vakken (0 buren) openen automatisch hun buren
+   - win-check: gewonnen zodra alle niet-mijn-vakken open zijn
+   ===================================================================== */
+
+const LEVELS = {
+  beginner:     { rows: 9,  cols: 9,  mines: 10 },
+  intermediate: { rows: 16, cols: 16, mines: 40 },
+  expert:       { rows: 16, cols: 30, mines: 99 },
+};
+
+// Spelstatus
+let grid = [];          // 2D-array van cel-objecten
+let rows, cols, mines;
+let minesPlaced = false; // worden pas geplaatst na de eerste klik
+let gameOver = false;
+let revealedCount = 0;   // hoeveel veilige vakjes al open staan
+let flagsUsed = 0;
+let flagMode = false;    // voor gsm/touch: tikken = vlaggen
+let currentLevel = "beginner";
+
+// Timer
+let timer = 0, timerId = null;
+
+// DOM-verwijzingen
+const boardEl   = document.getElementById("board");
+const mineCntEl = document.getElementById("mineCount");
+const timerEl   = document.getElementById("timer");
+const resetEl   = document.getElementById("reset");
+const statusEl  = document.getElementById("status");
+const flagBtn   = document.getElementById("flagToggle");
+
+/* --------------------- nieuw spel opzetten --------------------- */
+function newGame(level){
+  currentLevel = level;
+  ({ rows, cols, mines } = LEVELS[level]);
+
+  // status resetten
+  grid = [];
+  minesPlaced = false;
+  gameOver = false;
+  revealedCount = 0;
+  flagsUsed = 0;
+  stopTimer(); timer = 0;
+  resetEl.textContent = "🙂";
+  statusEl.textContent = "";
+  statusEl.className = "status";
+  updateHud();
+
+  // lege celobjecten aanmaken
+  for (let r = 0; r < rows; r++){
+    const row = [];
+    for (let c = 0; c < cols; c++){
+      row.push({ mine:false, revealed:false, flagged:false, count:0, el:null });
+    }
+    grid.push(row);
+  }
+
+  // het HTML-raster tekenen
+  boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--cell))`;
+  boardEl.innerHTML = "";
+  for (let r = 0; r < rows; r++){
+    for (let c = 0; c < cols; c++){
+      const cell = document.createElement("button");
+      cell.className = "cell";
+      cell.dataset.r = r; cell.dataset.c = c;
+      cell.addEventListener("click", () => onLeftClick(r, c));
+      cell.addEventListener("contextmenu", (e) => { e.preventDefault(); toggleFlag(r, c); });
+      grid[r][c].el = cell;
+      boardEl.appendChild(cell);
+    }
+  }
+}
+
+/* --------------------- mijnen plaatsen (na 1e klik) ---------------------
+   We vermijden het aangeklikte vakje én zijn 8 buren, zodat de eerste
+   klik altijd een open zone geeft. Dit heet "first-click safety". */
+function placeMines(safeR, safeC){
+  let placed = 0;
+  while (placed < mines){
+    const r = Math.floor(Math.random() * rows);
+    const c = Math.floor(Math.random() * cols);
+    if (grid[r][c].mine) continue;                 // al een mijn hier
+    if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue; // veilige zone
+    grid[r][c].mine = true;
+    placed++;
+  }
+  // voor elk vakje het aantal aangrenzende mijnen berekenen
+  for (let r = 0; r < rows; r++){
+    for (let c = 0; c < cols; c++){
+      if (grid[r][c].mine) continue;
+      grid[r][c].count = buren(r, c).filter(([nr, nc]) => grid[nr][nc].mine).length;
+    }
+  }
+  minesPlaced = true;
+}
+
+// geeft de geldige buurcoördinaten van (r,c) terug
+function buren(r, c){
+  const out = [];
+  for (let dr = -1; dr <= 1; dr++){
+    for (let dc = -1; dc <= 1; dc++){
+      if (dr === 0 && dc === 0) continue;
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) out.push([nr, nc]);
+    }
+  }
+  return out;
+}
+
+/* --------------------- klikken --------------------- */
+function onLeftClick(r, c){
+  if (gameOver) return;
+  if (flagMode){ toggleFlag(r, c); return; }  // op gsm: tikken = vlaggen
+
+  const cell = grid[r][c];
+  if (cell.revealed || cell.flagged) return;
+
+  if (!minesPlaced){ placeMines(r, c); startTimer(); }  // eerste klik
+  reveal(r, c);
+}
+
+/* --------------------- vakje openen + flood fill ---------------------
+   Recursief: een vakje met 0 buren opent automatisch al zijn buren. */
+function reveal(r, c){
+  const cell = grid[r][c];
+  if (cell.revealed || cell.flagged) return;
+
+  cell.revealed = true;
+  cell.el.classList.add("open");
+
+  if (cell.mine){ loseGame(cell); return; }
+
+  revealedCount++;
+  if (cell.count > 0){
+    cell.el.textContent = cell.count;
+    cell.el.classList.add("n" + cell.count);
+  } else {
+    // leeg vakje: open alle buren (flood fill)
+    buren(r, c).forEach(([nr, nc]) => reveal(nr, nc));
+  }
+  checkWin();
+}
+
+/* --------------------- vlag plaatsen/weghalen --------------------- */
+function toggleFlag(r, c){
+  if (gameOver) return;
+  const cell = grid[r][c];
+  if (cell.revealed) return;
+
+  cell.flagged = !cell.flagged;
+  cell.el.textContent = cell.flagged ? "🚩" : "";
+  cell.el.classList.toggle("flagged", cell.flagged);
+  flagsUsed += cell.flagged ? 1 : -1;
+  updateHud();
+}
+
+/* --------------------- winnen / verliezen --------------------- */
+function checkWin(){
+  // gewonnen zodra alle niet-mijn-vakjes open staan
+  if (revealedCount === rows * cols - mines){
+    gameOver = true;
+    stopTimer();
+    resetEl.textContent = "😎";
+    statusEl.textContent = `Gewonnen in ${timer}s!`;
+    statusEl.className = "status win";
+    vierWinst();           // confetti-viering (library canvas-confetti)
+    verstuurScore(true);   // <-- hier hangt straks je PHP/SQL aan
+  }
+}
+
+/* --------------------- winst vieren met confetti ---------------------
+   Gebruikt de library canvas-confetti. De viering schaalt mee met de
+   moeilijkheidsgraad: hoe moeilijker het level, hoe groter het feest. */
+function vierWinst(){
+  if (typeof confetti !== "function") return;   // library niet geladen? sla over
+  // respecteer de voorkeur voor minder beweging
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const aantal = { beginner: 80, intermediate: 150, expert: 250 }[currentLevel] || 100;
+
+  // een uitbarsting vanuit het midden...
+  confetti({ particleCount: aantal, spread: 70, origin: { y: 0.6 } });
+
+  // ...en bij expert nog twee zijkanten erbij
+  if (currentLevel === "expert"){
+    setTimeout(() => confetti({ particleCount: 120, angle:  60, spread: 55, origin: { x: 0 } }), 200);
+    setTimeout(() => confetti({ particleCount: 120, angle: 120, spread: 55, origin: { x: 1 } }), 200);
+  }
+}
+
+function loseGame(clicked){
+  gameOver = true;
+  stopTimer();
+  resetEl.textContent = "😵";
+  statusEl.textContent = "Boem! Je hebt op een mijn geklikt.";
+  statusEl.className = "status lose";
+  clicked.el.textContent = "💥";
+  // alle mijnen tonen
+  for (let r = 0; r < rows; r++){
+    for (let c = 0; c < cols; c++){
+      if (grid[r][c].mine){
+        grid[r][c].el.classList.add("open", "mine");
+        if (grid[r][c].el.textContent === "") grid[r][c].el.textContent = "💣";
+      }
+    }
+  }
+  verstuurScore(false);
+}
+
+/* --------------------- timer --------------------- */
+function startTimer(){
+  timerId = setInterval(() => { timer++; updateHud(); }, 1000);
+}
+function stopTimer(){ if (timerId){ clearInterval(timerId); timerId = null; } }
+
+/* --------------------- HUD bijwerken --------------------- */
+function updateHud(){
+  const left = mines - flagsUsed;            // resterende mijnen volgens je vlaggen
+  mineCntEl.textContent = String(Math.max(0, left)).padStart(3, "0");
+  timerEl.textContent   = String(Math.min(999, timer)).padStart(3, "0");
+}
+
+/* =====================================================================
+   HIER PLUG JE DE BACKEND IN  (PHP + SQL + REST)
+   Dit is precies de naad tussen jouw werkende JS en de server.
+   Op je eigen server (XAMPP/LAMP) maak je bv. een bestand
+   "api/score.php" dat de score in de SQL-database wegschrijft.
+   ===================================================================== */
+async function verstuurScore(gewonnen){
+  const score = {
+    level:    currentLevel,
+    tijd:     timer,
+    gewonnen: gewonnen,
+    // user_id komt straks uit je PHP-sessie of token
+  };
+  console.log("Score klaar om te versturen:", score);
+
+  // ---- ZO ZIET DE ECHTE CALL ERUIT (uncomment op je server) ----
+  // try {
+  //   const res = await fetch("api/score.php", {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify(score),
+  //   });
+  //   const data = await res.json();
+  //   console.log("Server antwoordde:", data);
+  // } catch (err) {
+  //   console.error("Score versturen mislukt:", err);
+  // }
+}
+
+/* --------------------- knoppen koppelen --------------------- */
+document.getElementById("levels").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  document.querySelectorAll("#levels button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  newGame(btn.dataset.level);
+});
+
+resetEl.addEventListener("click", () => newGame(currentLevel));
+
+flagBtn.addEventListener("click", () => {
+  flagMode = !flagMode;
+  flagBtn.classList.toggle("on", flagMode);
+  flagBtn.setAttribute("aria-pressed", String(flagMode));
+  flagBtn.textContent = flagMode ? "🚩 Vlag-modus: aan" : "🚩 Vlag-modus: uit";
+});
+
+// start
+newGame("beginner");
+</script>
+</body>
+</html>

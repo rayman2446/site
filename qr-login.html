@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inloggen met QR — Minesweeper</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --shell:#1b1f2a; --panel:#252b38; --line:#333c4d; --text:#e8edf5;
+         --muted:#8b96a8; --flag:#f5a524; --accent:#3ecf8e; --danger:#e5484d; }
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100vh; background:var(--shell); color:var(--text);
+       font-family:system-ui,sans-serif; display:flex; flex-direction:column;
+       align-items:center; padding:32px 16px;}
+  h1{font-family:"JetBrains Mono",monospace; font-weight:700; letter-spacing:.16em;
+     text-transform:uppercase; font-size:1.15rem; margin:0 0 6px;}
+  .subtitle{color:var(--muted); font-size:.85rem; margin-bottom:22px; text-align:center; max-width:320px;}
+
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:14px;
+        padding:24px; display:flex; flex-direction:column; align-items:center; gap:16px;}
+  /* de QR zelf moet zwart-op-wit blijven voor een goede scan */
+  .qr{background:#fff; padding:14px; border-radius:10px; width:212px; height:212px;
+      display:flex; align-items:center; justify-content:center;}
+  .state{font-family:"JetBrains Mono",monospace; font-size:.9rem; min-height:1.2em; text-align:center;}
+  .state .wacht{color:var(--muted);} .state .ok{color:var(--accent);} .state .err{color:var(--danger);}
+  .refresh{background:var(--flag); color:#10131a; border:none; border-radius:8px;
+           padding:10px 18px; font-weight:700; cursor:pointer; display:none;}
+  a.back{color:var(--muted); font-size:.8rem; text-decoration:none; margin-top:20px;}
+  a.back:hover{color:var(--flag);}
+</style>
+</head>
+<body>
+  <h1>Inloggen met QR</h1>
+  <p class="subtitle">Log in op je gsm, open daar de scanner en scan deze code met je camera.</p>
+
+  <div class="card">
+    <div class="qr" id="qr"></div>
+    <div class="state" id="state"><span class="wacht">● Wachten op je gsm…</span></div>
+    <button class="refresh" id="refresh">Nieuwe code</button>
+  </div>
+
+  <a class="back" href="account.php">&larr; gewoon met wachtwoord inloggen</a>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* =====================================================================
+   QR-LOGIN (laptop)
+   - maakt een token aan via api/qrlogin.php (REST POST create)
+   - toont het als QR-code (bibliotheek qrcodejs)
+   - pollt de status; zodra de gsm goedkeurt, claimt de laptop het token
+     en is hij ingelogd
+   ===================================================================== */
+
+let token = null;
+let pollTimer = null;
+
+function setState(html){ document.getElementById("state").innerHTML = html; }
+
+/* token aanmaken + QR tonen */
+async function start(){
+  document.getElementById("refresh").style.display = "none";
+  setState('<span class="wacht">● Wachten op je gsm…</span>');
+
+  try {
+    const res = await fetch("api/qrlogin.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "create" })
+    });
+    const data = await res.json();
+    token = data.token;
+    toonQR(token);
+    poll();
+  } catch (err) {
+    // DEMO-fallback (verwijderen op je eigen server): toon gewoon een voorbeeld-QR
+    token = willekeurigHex();
+    toonQR(token);
+    setState('<span class="wacht">● demo — geen server bereikbaar</span>');
+  }
+}
+
+/* de QR-code tekenen: hij bevat de URL die de gsm-camera opent */
+function toonQR(t){
+  const url = new URL("qr-approve.php?token=" + t, location.href).href;
+  const vak = document.getElementById("qr");
+  vak.innerHTML = "";
+  new QRCode(vak, { text: url, width: 184, height: 184,
+                    colorDark: "#000000", colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M });
+}
+
+/* elke 2 seconden de status opvragen */
+function poll(){
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async function(){
+    try {
+      const res = await fetch("api/qrlogin.php?token=" + token);
+      const data = await res.json();
+
+      if (data.status === "goedgekeurd"){
+        clearInterval(pollTimer);
+        claim();
+      } else if (data.status === "verlopen"){
+        clearInterval(pollTimer);
+        setState('<span class="err">● Code verlopen</span>');
+        document.getElementById("refresh").style.display = "inline-block";
+      }
+    } catch (err) { /* server even weg -> volgende poll probeert opnieuw */ }
+  }, 2000);
+}
+
+/* de laptop logt zichzelf in */
+async function claim(){
+  try {
+    const res = await fetch("api/qrlogin.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "claim", token: token })
+    });
+    const data = await res.json();
+    if (res.ok){
+      setState('<span class="ok">● Ingelogd als ' + data.gebruikersnaam + ' — even geduld…</span>');
+      setTimeout(function(){ location.href = "index.php"; }, 1200);
+    } else {
+      setState('<span class="err">● ' + (data.fout || "Inloggen mislukt") + '</span>');
+    }
+  } catch (err) {
+    setState('<span class="err">● Geen verbinding met de server</span>');
+  }
+}
+
+function willekeurigHex(){
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(b).map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
+document.getElementById("refresh").addEventListener("click", start);
+start();
+</script>
+</body>
+</html>
