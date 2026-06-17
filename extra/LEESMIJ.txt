@@ -1,0 +1,4 @@
+Deze map hoort NIET op je server. Het zijn hulpbestanden:
+- sensortest.html      : om te testen of de kantelsensor van je gsm werkt
+- *_voorbeeld.pdf      : tonen hoe de gegenereerde PDF's eruitzien
+Je hoeft deze map niet te uploaden; het echte project staat in de map erboven.
