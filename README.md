@@ -4,9 +4,9 @@
 > achievements, PDF-export, en een smartphone die via REST als afstandsbediening
 > (kantelsensor) dient.
 
-**Groep:** `[1EAIa]`
-**Studenten:** `[Ollivier Joachims]` · `[Rayan Kandichy]`
-**Repository:** `[https://github.com/rayman2446/site ]`
+**Groep:** `[VUL IN: groepsnummer]`
+**Studenten:** `[VUL IN: naam Student A]` · `[VUL IN: naam Student B]`
+**Repository:** `[VUL IN: github-link]`
 
 ---
 
@@ -197,7 +197,7 @@ en voortgangsbalken. Data uit `api/achievements.php`.
 
 Elke student dekt de **volledige** basislijst op zijn eigen pagina's.
 
-| | Ollivier Joachims | Rayan Kandichy |
+| | Student A | Student B |
 |---|---|---|
 | Pagina's | `index.php`, `scorebord.php` | `account.php`, `mijn-scores.php` |
 | PHP | scorevalidatie, ranking | authenticatie, sessies |
@@ -207,10 +207,13 @@ Elke student dekt de **volledige** basislijst op zijn eigen pagina's.
 | REST + sensor | kantel-controller | `[OPEN — zie checklist]` |
 | PHP voorbij les 5 | PDF-certificaat | PDF-rapport |
 
+`[VUL IN: pas deze tabel aan jullie echte verdeling aan. Spreek af wie het
+gedeelde achievementsysteem op zijn naam neemt als extra.]`
+
 ## Eisenchecklist
 
 ### Basis (50%)
-| Eis | Ollivier Joachims | Rayan Kandichy |
+| Eis | Student A | Student B |
 |---|---|---|
 | Git version control | ✅ | ✅ |
 | GitHub voor samenwerking | ✅ | ✅ |
@@ -223,7 +226,7 @@ Elke student dekt de **volledige** basislijst op zijn eigen pagina's.
 | RESTful API naar extern toestel | ✅ controller | 🔧 **OPEN** (QR verwijderd) |
 
 ### Geavanceerd (30%)
-| Eis | Ollivier Joachims | Rayan Kandichy |
+| Eis | Student A | Student B |
 |---|---|---|
 | Atomic commits & branches | 🔧 `[toon in git-historiek]` | 🔧 `[toon in git-historiek]` |
 | PHP voorbij lecture 5 | ✅ PDF-certificaat | ✅ PDF-rapport |
@@ -249,3 +252,7 @@ Elke student dekt de **volledige** basislijst op zijn eigen pagina's.
   zonder sensor — een betrouwbaar vangnet voor de demo.
 - **Pollen i.p.v. push.** Controller en scorebord pollen op intervallen;
   WebSockets zouden efficiënter zijn.
+
+---
+
+`[VUL IN: voeg eventueel screenshots toe in een /docs map en link ze hier.]`

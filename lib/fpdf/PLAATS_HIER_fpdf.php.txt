@@ -1,0 +1,3 @@
+Download FPDF van https://fpdf.org en plaats hier het bestand 'fpdf.php'
+(zodat het pad lib/fpdf/fpdf.php wordt). Daarna werken api/certificaat.php
+en api/rapport.php. Verwijder dit tekstbestand daarna gerust.
